@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shelves — Franchise</title>
+<link rel="preload" href="../fonts/space-grotesk-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../fonts/inter-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../fonts.css">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<datalist id="console-list">
+  <option value="NES"></option>
+  <option value="SNES"></option>
+  <option value="Nintendo 64"></option>
+  <option value="GameCube"></option>
+  <option value="Wii"></option>
+  <option value="Wii U"></option>
+  <option value="Nintendo Switch"></option>
+  <option value="Nintendo Switch 2"></option>
+  <option value="Game Boy"></option>
+  <option value="Game Boy Color"></option>
+  <option value="Game Boy Advance"></option>
+  <option value="Nintendo DS"></option>
+  <option value="Nintendo 3DS"></option>
+  <option value="Virtual Boy"></option>
+</datalist>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark"></div>
+      <h1>Shelves</h1>
+      <p>Tracker giochi Nintendo</p>
+    </div>
+    <nav>
+      <a class="nav-btn active" href="index.html">Franchise</a>
+      <a class="nav-btn" href="../emulatori/index.html">Emulatori</a>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="ghost-btn" id="export-btn">Esporta JSON</button>
+      <button class="ghost-btn" id="import-btn">Importa JSON</button>
+      <input type="file" id="import-file" accept="application/json" style="display:none">
+    </div>
+  </aside>
+
+  <main>
+    <section id="view-franchises">
+      <div class="view-header">
+        <div>
+          <h2>Franchise</h2>
+          <p>Organizza i giochi che ti interessano per franchise, console e remaster.</p>
+        </div>
+        <button class="primary-btn" id="new-franchise-btn">+ Nuovo franchise</button>
+      </div>
+
+      <div class="form-panel top-level" id="franchise-form-panel">
+        <div class="form-grid">
+          <div class="form-field full">
+            <label for="franchise-name-input">Nome franchise</label>
+            <input type="text" id="franchise-name-input" placeholder="Es. The Legend of Zelda">
+          </div>
+        </div>
+        <div class="form-buttons">
+          <button class="primary-btn" id="save-franchise-btn">Salva</button>
+          <button class="subtle-btn" id="cancel-franchise-btn">Annulla</button>
+        </div>
+      </div>
+
+      <div id="franchises-list"></div>
+
+      <div class="empty-state" id="franchises-empty">
+        <strong>Nessun franchise ancora</strong>
+        Comincia aggiungendone uno con il pulsante qui sopra.
+      </div>
+    </section>
+
+    <footer class="hint">
+      Dati salvati in locale nel browser (localStorage). Usa "Esporta JSON" ogni tanto per avere un backup.
+    </footer>
+  </main>
+</div>
+
+<script src="../common.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
