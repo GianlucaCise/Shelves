@@ -1,6 +1,6 @@
 "use strict";
 
-// Nota: STORAGE_KEY, data, uid(), load(), save(), escapeHtml() e setupExportImport()
+// Nota: data, dataReady, apiFetch(), escapeHtml() e setupExportImport()
 // arrivano da ../common.js, caricato prima di questo file.
 
 (function(){
@@ -22,13 +22,17 @@
     franchiseFormPanel.classList.remove("open");
   });
 
-  document.getElementById("save-franchise-btn").addEventListener("click", () => {
+  document.getElementById("save-franchise-btn").addEventListener("click", async () => {
     const name = franchiseNameInput.value.trim();
     if(!name) return;
-    data.franchises.push({ id: uid(), name, games: [] });
-    save();
-    franchiseFormPanel.classList.remove("open");
-    renderFranchises();
+    try{
+      const franchise = await apiFetch("/franchises", { method: "POST", body: JSON.stringify({ name }) });
+      data.franchises.push(franchise);
+      franchiseFormPanel.classList.remove("open");
+      renderFranchises();
+    }catch(e){
+      alert("Errore nel salvare il franchise: " + e.message);
+    }
   });
 
   // ---------- render: franchises ----------
@@ -92,12 +96,16 @@
       }
 
       // franchise-level actions
-      section.querySelector(".remove-franchise-btn").addEventListener("click", () => {
+      section.querySelector(".remove-franchise-btn").addEventListener("click", async () => {
         const ok = confirm(`Eliminare il franchise "${franchise.name}" e tutti i suoi giochi?`);
         if(!ok) return;
-        data.franchises = data.franchises.filter(f => f.id !== franchise.id);
-        save();
-        renderFranchises();
+        try{
+          await apiFetch(`/franchises/${franchise.id}`, { method: "DELETE" });
+          data.franchises = data.franchises.filter(f => f.id !== franchise.id);
+          renderFranchises();
+        }catch(e){
+          alert("Errore nell'eliminare il franchise: " + e.message);
+        }
       });
 
       const gameFormPanel = section.querySelector(".game-form-panel");
@@ -125,22 +133,24 @@
         remasterField.style.display = remasterCheck.checked ? "block" : "none";
       });
 
-      section.querySelector(".save-game-btn").addEventListener("click", () => {
+      section.querySelector(".save-game-btn").addEventListener("click", async () => {
         const title = titleInput.value.trim();
         const originalConsole = consoleInput.value.trim();
         if(!title || !originalConsole) return;
         const hasRemaster = remasterCheck.checked;
         const remasterConsole = hasRemaster ? remasterConsoleInput.value.trim() : "";
-        franchise.games.push({
-          id: uid(),
-          title,
-          originalConsole,
-          hasRemaster: hasRemaster && !!remasterConsole,
-          remasterConsole: hasRemaster ? remasterConsole : ""
-        });
-        save();
-        gameFormPanel.classList.remove("open");
-        renderFranchises();
+
+        try{
+          const game = await apiFetch(`/franchises/${franchise.id}/games`, {
+            method: "POST",
+            body: JSON.stringify({ title, originalConsole, hasRemaster, remasterConsole })
+          });
+          franchise.games.push(game);
+          gameFormPanel.classList.remove("open");
+          renderFranchises();
+        }catch(e){
+          alert("Errore nel salvare il gioco: " + e.message);
+        }
       });
 
       franchisesList.appendChild(section);
@@ -165,10 +175,14 @@
         </div>` : ""}
       </div>
     `;
-    card.querySelector(".remove-game").addEventListener("click", () => {
-      franchise.games = franchise.games.filter(g => g.id !== game.id);
-      save();
-      renderFranchises();
+    card.querySelector(".remove-game").addEventListener("click", async () => {
+      try{
+        await apiFetch(`/franchises/games/${game.id}`, { method: "DELETE" });
+        franchise.games = franchise.games.filter(g => g.id !== game.id);
+        renderFranchises();
+      }catch(e){
+        alert("Errore nel rimuovere il gioco: " + e.message);
+      }
     });
     return card;
   }
@@ -176,5 +190,5 @@
   // permette a common.js di aggiornare questa vista dopo un import JSON
   window.onDataImported = renderFranchises;
 
-  renderFranchises();
+  dataReady.then(renderFranchises);
 })();

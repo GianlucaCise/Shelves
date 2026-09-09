@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Shelves — Franchise</title>
+<title>Shelves — Emulatori</title>
 <link rel="preload" href="../fonts/space-grotesk-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="../fonts/inter-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="../fonts.css">
@@ -36,8 +36,8 @@
       <p>Tracker giochi Nintendo</p>
     </div>
     <nav>
-      <a class="nav-btn active" href="index.html">Franchise</a>
-      <a class="nav-btn" href="../emulatori/index.html">Emulatori</a>
+      <a class="nav-btn" href="../franchise/index.html">Franchise</a>
+      <a class="nav-btn active" href="index.html">Emulatori</a>
     </nav>
     <div class="sidebar-footer">
       <button class="ghost-btn" id="export-btn">Esporta JSON</button>
@@ -47,38 +47,38 @@
   </aside>
 
   <main>
-    <section id="view-franchises">
+    <section id="view-emulators">
       <div class="view-header">
         <div>
-          <h2>Franchise</h2>
-          <p>Organizza i giochi che ti interessano per franchise, console e remaster.</p>
+          <h2>Emulatori</h2>
+          <p>Per ogni console, segna a mano quali emulatori puoi usare.</p>
         </div>
-        <button class="primary-btn" id="new-franchise-btn">+ Nuovo franchise</button>
+        <button class="primary-btn" id="new-console-btn">+ Nuova console</button>
       </div>
 
-      <div class="form-panel top-level" id="franchise-form-panel">
+      <div class="form-panel top-level" id="console-form-panel">
         <div class="form-grid">
           <div class="form-field full">
-            <label for="franchise-name-input">Nome franchise</label>
-            <input type="text" id="franchise-name-input" placeholder="Es. The Legend of Zelda">
+            <label for="console-name-input">Nome console</label>
+            <input type="text" id="console-name-input" list="console-list" placeholder="Es. GameCube">
           </div>
         </div>
         <div class="form-buttons">
-          <button class="primary-btn" id="save-franchise-btn">Salva</button>
-          <button class="subtle-btn" id="cancel-franchise-btn">Annulla</button>
+          <button class="primary-btn" id="save-console-btn">Salva</button>
+          <button class="subtle-btn" id="cancel-console-btn">Annulla</button>
         </div>
       </div>
 
-      <div id="franchises-list"></div>
+      <div id="consoles-list"></div>
 
-      <div class="empty-state" id="franchises-empty">
-        <strong>Nessun franchise ancora</strong>
-        Comincia aggiungendone uno con il pulsante qui sopra.
+      <div class="empty-state" id="consoles-empty">
+        <strong>Nessuna console ancora</strong>
+        Aggiungine una per iniziare ad assegnare gli emulatori.
       </div>
     </section>
 
     <footer class="hint">
-      Dati salvati in locale nel browser (localStorage). Usa "Esporta JSON" ogni tanto per avere un backup.
+      Dati salvati sul server (SQLite) tramite le API. Usa "Esporta JSON" ogni tanto per avere un backup.
     </footer>
   </main>
 </div>

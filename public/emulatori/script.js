@@ -1,6 +1,6 @@
 "use strict";
 
-// Nota: STORAGE_KEY, data, uid(), load(), save(), escapeHtml() e setupExportImport()
+// Nota: data, dataReady, apiFetch(), escapeHtml() e setupExportImport()
 // arrivano da ../common.js, caricato prima di questo file.
 
 (function(){
@@ -22,13 +22,18 @@
     consoleFormPanel.classList.remove("open");
   });
 
-  document.getElementById("save-console-btn").addEventListener("click", () => {
+  document.getElementById("save-console-btn").addEventListener("click", async () => {
     const name = consoleNameInput.value.trim();
     if(!name) return;
-    data.consoles.push({ id: uid(), console: name, emulators: [] });
-    save();
-    consoleFormPanel.classList.remove("open");
-    renderConsoles();
+    try{
+      const consoleEntry = await apiFetch("/consoles", { method: "POST", body: JSON.stringify({ name }) });
+      consoleEntry.emulatorIds = consoleEntry.emulatorIds || [];
+      data.consoles.push(consoleEntry);
+      consoleFormPanel.classList.remove("open");
+      renderConsoles();
+    }catch(e){
+      alert("Errore nel salvare la console: " + e.message);
+    }
   });
 
   // ---------- render: consoles / emulators ----------
@@ -60,33 +65,54 @@
         tagsWrap.innerHTML = `<span class="mono" style="color:var(--text-muted);font-size:13px;">Nessun emulatore assegnato</span>`;
       }else{
         entry.emulators.forEach((name, idx) => {
+          const emulatorId = entry.emulatorIds ? entry.emulatorIds[idx] : null;
           const tag = document.createElement("span");
           tag.className = "emulator-tag";
           tag.innerHTML = `${escapeHtml(name)} <button title="Rimuovi">×</button>`;
-          tag.querySelector("button").addEventListener("click", () => {
-            entry.emulators.splice(idx, 1);
-            save();
-            renderConsoles();
+          tag.querySelector("button").addEventListener("click", async () => {
+            try{
+              if(emulatorId){
+                await apiFetch(`/consoles/emulators/${emulatorId}`, { method: "DELETE" });
+              }
+              entry.emulators.splice(idx, 1);
+              if(entry.emulatorIds) entry.emulatorIds.splice(idx, 1);
+              renderConsoles();
+            }catch(e){
+              alert("Errore nel rimuovere l'emulatore: " + e.message);
+            }
           });
           tagsWrap.appendChild(tag);
         });
       }
 
-      card.querySelector(".remove-console-btn").addEventListener("click", () => {
+      card.querySelector(".remove-console-btn").addEventListener("click", async () => {
         const ok = confirm(`Eliminare la console "${entry.console}" e i suoi emulatori assegnati?`);
         if(!ok) return;
-        data.consoles = data.consoles.filter(c => c.id !== entry.id);
-        save();
-        renderConsoles();
+        try{
+          await apiFetch(`/consoles/${entry.id}`, { method: "DELETE" });
+          data.consoles = data.consoles.filter(c => c.id !== entry.id);
+          renderConsoles();
+        }catch(e){
+          alert("Errore nell'eliminare la console: " + e.message);
+        }
       });
 
       const newEmulatorInput = card.querySelector(".new-emulator-input");
-      function addEmulator(){
+      async function addEmulator(){
         const name = newEmulatorInput.value.trim();
         if(!name) return;
-        entry.emulators.push(name);
-        save();
-        renderConsoles();
+        try{
+          const emulator = await apiFetch(`/consoles/${entry.id}/emulators`, {
+            method: "POST",
+            body: JSON.stringify({ name })
+          });
+          entry.emulators.push(emulator.name);
+          if(!entry.emulatorIds) entry.emulatorIds = [];
+          entry.emulatorIds.push(emulator.id);
+          renderConsoles();
+        }catch(e){
+          alert("Errore nell'aggiungere l'emulatore: " + e.message);
+        }
       }
       card.querySelector(".add-emulator-btn").addEventListener("click", addEmulator);
       newEmulatorInput.addEventListener("keydown", (e) => {
@@ -103,5 +129,5 @@
   // permette a common.js di aggiornare questa vista dopo un import JSON
   window.onDataImported = renderConsoles;
 
-  renderConsoles();
+  dataReady.then(renderConsoles);
 })();

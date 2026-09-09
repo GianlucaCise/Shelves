@@ -1,38 +1,47 @@
 "use strict";
 
 // ---------- dati condivisi tra le pagine ----------
+// A differenza della versione "vanilla" (main), qui i dati non stanno più in
+// localStorage: vivono nel database SQLite del backend Express, e questo file
+// parla con le API (/api/...) per leggerli e scriverli.
 
-const STORAGE_KEY = "shelves-nintendo-tracker:v1";
+const API_BASE = "/api";
 
 /** @typedef {{id:string,title:string,originalConsole:string,hasRemaster:boolean,remasterConsole:string}} Game */
 /** @typedef {{id:string,name:string,games:Game[]}} Franchise */
-/** @typedef {{id:string,console:string,emulators:string[]}} ConsoleEntry */
+/** @typedef {{id:string,console:string,emulators:string[],emulatorIds:string[]}} ConsoleEntry */
 
 let data = {
   franchises: [],
   consoles: []
 };
 
-function uid(){
-  return (crypto && crypto.randomUUID) ? crypto.randomUUID() : 'id-' + Math.random().toString(36).slice(2) + Date.now();
-}
+// Promise che si risolve quando il primo caricamento dal server è completo.
+// Le pagine aspettano questa promise prima del primo render.
+let dataReadyResolve;
+const dataReady = new Promise(resolve => { dataReadyResolve = resolve; });
 
-function load(){
-  try{
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if(raw){
-      const parsed = JSON.parse(raw);
-      if(parsed && Array.isArray(parsed.franchises) && Array.isArray(parsed.consoles)){
-        data = parsed;
-      }
-    }
-  }catch(e){
-    console.warn("Impossibile leggere i dati salvati:", e);
+async function apiFetch(url, options){
+  const res = await fetch(API_BASE + url, {
+    headers: { "Content-Type": "application/json" },
+    ...options
+  });
+  if(!res.ok){
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || `Richiesta fallita (${res.status})`);
   }
+  if(res.status === 204) return null;
+  return res.json();
 }
 
-function save(){
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+async function loadData(){
+  try{
+    data = await apiFetch("/data");
+  }catch(e){
+    console.error("Impossibile caricare i dati dal server:", e);
+    alert("Non riesco a contattare il server. Controlla che sia avviato (npm start).");
+  }
+  dataReadyResolve();
 }
 
 function escapeHtml(str){
@@ -41,7 +50,7 @@ function escapeHtml(str){
   return div.innerHTML;
 }
 
-// ---------- export / import (usati dalla sidebar, presente in ogni pagina) ----------
+// ---------- export / import (sidebar, presente in ogni pagina) ----------
 
 function setupExportImport(){
   const exportBtn = document.getElementById("export-btn");
@@ -49,8 +58,9 @@ function setupExportImport(){
   const importInput = document.getElementById("import-file");
 
   if(exportBtn){
-    exportBtn.addEventListener("click", () => {
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    exportBtn.addEventListener("click", async () => {
+      const snapshot = await apiFetch("/data");
+      const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       const stamp = new Date().toISOString().slice(0,10);
@@ -68,17 +78,15 @@ function setupExportImport(){
       const file = e.target.files[0];
       if(!file) return;
       const reader = new FileReader();
-      reader.onload = () => {
+      reader.onload = async () => {
         try{
           const parsed = JSON.parse(reader.result);
           if(!parsed || !Array.isArray(parsed.franchises) || !Array.isArray(parsed.consoles)){
             throw new Error("Formato non valido");
           }
-          const ok = confirm("Importare questo file sovrascriverà tutti i dati attuali. Continuare?");
+          const ok = confirm("Importare questo file sovrascriverà tutti i dati attuali sul server. Continuare?");
           if(!ok) return;
-          data = parsed;
-          save();
-          // ogni pagina definisce la propria funzione di refresh, se presente
+          data = await apiFetch("/data", { method: "POST", body: JSON.stringify(parsed) });
           if(typeof window.onDataImported === "function"){
             window.onDataImported();
           }
@@ -92,5 +100,5 @@ function setupExportImport(){
   }
 }
 
-// caricamento dati non appena questo script viene eseguito, prima dello script di pagina
-load();
+// avvia subito il caricamento dei dati dal server
+loadData();
