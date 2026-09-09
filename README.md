@@ -5,6 +5,15 @@ vanilla (branch `main`). Il frontend (cartella `public/`) resta HTML/CSS/JS
 puro, ma ora comunica con il server tramite le API invece di leggere/scrivere
 direttamente nel browser.
 
+## Configurazione
+
+Copia `.env.example` in `.env` (già pronto con `PORT=3000`) e modifica pure
+la porta se ti serve:
+
+```
+cp .env.example .env
+```
+
 ## Avvio
 
 ```
@@ -12,9 +21,10 @@ npm install
 npm start
 ```
 
-Il server parte su http://localhost:3000 (redirige automaticamente a
-`/franchise/`). I dati vengono salvati in `shelves.db` (SQLite), creato
-automaticamente al primo avvio nella cartella del progetto.
+Il server parte sulla porta indicata in `.env` (default `http://localhost:3000`,
+redirige automaticamente a `/franchise/`). I dati vengono salvati in
+`shelves.db` (SQLite), creato automaticamente al primo avvio nella cartella
+del progetto.
 
 ## Struttura
 
